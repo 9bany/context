@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -16,13 +15,23 @@ func main() {
 }
 
 func handle(ctx *gin.Context) {
-
-	defer log.Println("i was sent payload to you")
+	res := make(chan gin.H)
 	requestCtx := ctx.Request.Context()
-	select {
-	case <-time.After(5 * time.Second):
-		ctx.JSON(http.StatusOK, gin.H{"msg": "Hello"})
-	case <-requestCtx.Done():
-		ctx.JSON(http.StatusInternalServerError, gin.H{"msg": "Error"})
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		res <- gin.H{"msg": "Hello"}
+		close(res)
+	}()
+	for {
+		select {
+		case dst := <-res:
+			ctx.JSON(http.StatusOK, dst)
+			return
+		case <-requestCtx.Done():
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": "Error"})
+			return
+		}
 	}
+
 }

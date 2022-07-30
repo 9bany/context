@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -39,9 +40,13 @@ func main() {
 			log.Println(err.Error())
 			return
 		}
+		
+		io.Copy(os.Stdout, res.Body)
 
 		resChan <- []string{"You has data, please ! handle it"}
 	}()
+
+	
 
 	for {
 		select {
